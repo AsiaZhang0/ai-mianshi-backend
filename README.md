@@ -8,7 +8,7 @@ AI 面试官是一个智能面试系统，用户上传简历 PDF 后，AI 面试
 
 ### 功能演示
 
-![演示视频](./20260627_221628.mp4)
+<video src="./MyVideo.mp4" controls width="100%"></video>
 
 ---
 
