@@ -1,0 +1,107 @@
+spring:
+  application:
+    name: questions
+  profiles:
+    active: local
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mianshi?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:}
+    password: ${MYSQL_PASSWORD:}
+  elasticsearch:
+    Uris: https://localhost:9200
+    username: ${ES_USERNAME:}
+    password: ${ES_PASSWORD:}
+    rest-client:
+      ssl:
+        bundle: es-ssl-bundle
+  ssl:
+    bundle:
+      pem:
+        es-ssl-bundle:
+          truststore:
+            certificate: "classpath:ca/http_ca.crt"
+  # Redis 配置（与 Gateway 共用同一个 Redis，读取 Sa-Token Session）
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      # 批量发送配置：producer 攒够 batch-size 或等待 linger-ms 后一次发出
+      properties:
+        batch.size: 10
+        linger.ms: 10
+      batch-size: 16384
+
+# Knife4j 网关聚合模式
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+    enable-global-parameter: true
+    enable-header: true
+  global-parameter:
+    - name: satoken
+      description: Sa-Token 认证令牌
+      in: header
+      required: false
+# SpringDoc 配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  packages-to-scan: org.example.questions.controller
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+  global-config:
+    db-config:
+      logic-delete-field: isDelete #全局逻辑删除的实体字段名
+      logic-delete-value: 1 #逻辑已删除（默认为1）
+      logic-not-delete-value: 0 #逻辑未删除值（默认为0)
+
+server:
+  port: 8083
+
+############## Sa-Token 配置 ##############
+sa-token:
+  token-name: satoken
+  timeout: 86400
+  active-timeout: 1800
+  token-style: tik
+  is-read-header: true
+  is-read-cookie: false
+  is-write-header: true
+  # 使用 Redis 存储（通过 spring.data.redis 配置连接）
+  storage-type: redis
+
+dubbo:
+  application:
+    # 序列化安全检查: STRICT/WARN/DISABLE
+    serialize-check-status: WARN
+    # 自动信任项目中的序列化类
+    auto-trust-serialize-class: true
+  registry:
+    address: nacos://localhost:8848?username=${NACOS_USERNAME:nacos}&password=${NACOS_PASSWORD:}
+    register-mode: instance
+    group: dubbo
+  protocol:
+    name: dubbo
+    port: 50053
+    serialization: fastjson2
+  consumer:
+    timeout: 120000
+    registry:
+      group: dubbo

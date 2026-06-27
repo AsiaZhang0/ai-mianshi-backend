@@ -1,0 +1,58 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: file
+  profiles:
+    active: local
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+# 腾讯云 COS 配置（敏感信息通过 application-local.yaml 注入）
+cos:
+  secret-id: ${COS_SECRET_ID:}
+  secret-key: ${COS_SECRET_KEY:}
+  region: ap-guangzhou
+  bucket-name: ai-mianshi-1306196844
+  # 访问域名（可选，不填则使用默认 CDN 域名）
+  base-url: https://ai-mianshi-1306196844.cos.ap-guangzhou.myqcloud.com
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  packages-to-scan: org.example.file.controller
+
+dubbo:
+  application:
+    # 序列化安全检查: STRICT/WARN/DISABLE
+    serialize-check-status: WARN
+    # 自动信任项目中的序列化类
+    auto-trust-serialize-class: true
+  registry:
+    address: nacos://localhost:8848?username=${NACOS_USERNAME:nacos}&password=${NACOS_PASSWORD:}
+    register-mode: instance
+    group: dubbo
+  protocol:
+    name: dubbo
+    port: 50056
+    serialization: fastjson2
+  consumer:
+    timeout: 120000
+    registry:
+      group: dubbo

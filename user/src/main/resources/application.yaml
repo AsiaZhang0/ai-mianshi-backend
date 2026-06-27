@@ -1,0 +1,97 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: user
+  profiles:
+    active: local
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mianshi?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:}
+    password: ${MYSQL_PASSWORD:}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000
+  # Redisson 配置
+#  redis:
+#    redisson:
+#      config:
+#        singleServerConfig:
+#          address: "redis://localhost:6379"
+#          database: 0
+#          connectionPoolSize: 32
+#          connectionMinimumIdleSize: 8
+#          timeout: 3000
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete #全局逻辑删除的实体字段名
+      logic-delete-value: 1 #逻辑已删除（默认为1）
+      logic-not-delete-value: 0 #逻辑未删除值（默认为0)
+
+############## Sa-Token 配置 ##############
+sa-token:
+  # Token 名称（需与 gateway 保持一致）
+  token-name: satoken
+  # Token 有效期（1天）
+  timeout: 86400
+  # 临时有效期（30分钟无操作后过期，-1 表示不限制）
+  active-timeout: 1800
+  # Token 风格
+  token-style: tik
+  # 是否从 Header 读取 Token
+  is-read-header: true
+  is-read-cookie: false
+  is-write-header: true
+  # 使用 Redis 存储 Token/Session（通过 spring.data.redis 配置连接）
+
+
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+# SpringDoc 配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  packages-to-scan: org.example.user.controller
+
+
+dubbo:
+  application:
+    # 序列化安全检查: STRICT/WARN/DISABLE
+    serialize-check-status: WARN
+    # 自动信任项目中的序列化类
+    auto-trust-serialize-class: true
+  registry:
+    address: nacos://localhost:8848?username=${NACOS_USERNAME:nacos}&password=${NACOS_PASSWORD:}
+    register-mode: instance
+    group: dubbo
+  protocol:
+    name: dubbo
+    port: 50052
+    serialization: fastjson2
+  consumer:
+    timeout: 120000
+    registry:
+      group: dubbo

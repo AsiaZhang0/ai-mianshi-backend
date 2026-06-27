@@ -1,0 +1,76 @@
+server:
+  port: 8085
+spring:
+  application:
+    name: agent
+  profiles:
+    active: local
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: agent-question-consumer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: org.example.common.model.message, org.example.model.dto.question
+      # 批量消费配置
+      max-poll-records: 200
+      fetch-min-size: 1
+    listener:
+      type: batch
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000
+
+dubbo:
+  application:
+    # 序列化安全检查: STRICT/WARN/DISABLE
+    serialize-check-status: WARN
+    # 自动信任项目中的序列化类
+    auto-trust-serialize-class: true
+  registry:
+    address: nacos://localhost:8848?username=${NACOS_USERNAME:nacos}&password=${NACOS_PASSWORD:}
+    register-mode: instance
+    group: dubbo
+  protocol:
+    name: dubbo
+    port: 20881  # 指定一个不冲突的端口，避免默认 50052 冲突
+    serialization: fastjson2
+  consumer:
+    timeout: 120000
+    registry:
+      group: dubbo
+    check: false  # 启动时不检查服务提供者是否存在
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+
+sa-token:
+  # Token 名称（需与 gateway 保持一致）
+  token-name: satoken
+  # Token 有效期（1天）
+  timeout: 86400
+  # 临时有效期（30分钟无操作后过期，-1 表示不限制）
+  active-timeout: 1800
+  # Token 风格
+  token-style: tik
+  # 是否从 Header 读取 Token
+  is-read-header: true
+  is-read-cookie: false
+  is-write-header: true

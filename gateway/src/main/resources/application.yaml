@@ -1,0 +1,154 @@
+server:
+  port: 8081
+  # Gateway 文件上传大小限制
+  max-http-request-header-size: 20KB
+spring:
+  application:
+    name: gateway
+  profiles:
+    active: local
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+        # 服务注册配置
+        register-enabled: true
+        enabled: true
+        # 客户端启动失败时快速失败（默认 true），改为 false 允许重试
+        failure-tolerance-enabled: true
+    gateway:
+      # HTTP 客户端配置（含文件上传超时）
+      server:
+        webflux:
+          discovery:
+            locator:
+              lower-case-service-id: true
+              enabled: false
+          global-cors:
+            cors-configurations:
+              '[/**]':
+                allowedOriginPatterns:
+                  - "http://localhost:*"
+                  - "https://localhost:*"
+                allowedHeaders: "*"
+                allowedMethods: "*"
+                allowCredentials: true
+                maxAge: 3600
+          routes:
+            # ========== User 服务 ==========
+            - id: user-service
+              uri: lb://user
+              predicates:
+                - Path=/api/user/**
+              filters:
+                - StripPrefix=2
+            # ========== Questions 服务 ==========
+            - id: questions-service
+              uri: lb://questions
+              predicates:
+                - Path=/api/questions/**
+              filters:
+                - StripPrefix=2
+            # ========== QuestionBank 服务 ==========
+            - id: questionbank
+              uri: lb://questionBank
+              predicates:
+                - Path=/api/questionBank/**
+              filters:
+                - StripPrefix=2
+            # ========== Agent 服务 ==========
+            - id: agent
+              uri: lb://agent
+              predicates:
+                - Path=/api/agent/**
+              filters:
+                - StripPrefix=2
+            # ========== File 服务 ==========
+            - id: file
+              uri: lb://file
+              predicates:
+                - Path=/api/file/**
+              filters:
+                - StripPrefix=2
+          httpclient:
+            response-timeout: 120s
+            pool:
+              max-life-time: 600s
+              max-idle-time: 60s
+              type: elastic
+            connect-timeout: 5000
+    sentinel:
+      transport:
+        dashboard: localhost:8090    # Sentinel Dashboard 地址
+        port: 8087                   # 客户端上报端口（Dashboard 下发规则用）
+      eager: true                    # 是否提前触发 Sentinel 初始化
+      filter:
+        enabled: false
+      scg:
+        order: -100                  # SCG 适配器过滤器优先级
+
+      # ======== Push 模式：Nacos 数据源 ========
+      # 规则持久化到 Nacos，Dashboard 修改规则后推送到 Nacos，客户端自动同步
+      # 对应 Data ID（GROUP=SENTINEL_GROUP）：
+      #   sentinel-gateway-flow-rules      — 网关限流规则
+      #   sentinel-gateway-api-definitions — 网关 API 分组
+      #   sentinel-degrade-rules           — 熔断降级规则
+      # 初始化脚本: scripts/sentinel-nacos-init.sh
+      # 注意：Gateway 场景下 datasource 通过 Java 配置类 SentinelNacosDataSourceConfig 手动注册，
+      #       不在 yaml 中配置 datasource（Spring Cloud Alibaba Sentinel 自动装配仅支持普通 FlowRule）
+
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000
+# Sa-Token 配置
+sa-token:
+  # Token 名称（需与 user 服务保持一致）
+  token-name: satoken
+  # Token 有效期（1天，与 user 服务一致）
+  timeout: 86400
+  # 临时有效期（30分钟无操作后过期，-1 表示不限制）
+  active-timeout: 1800
+  # Token 风格
+  token-style: tik
+  # 是否从 Header 读取 Token
+  is-read-header: true
+  is-read-cookie: false
+  is-write-header: true
+
+
+
+# 日志
+logging:
+  level:
+    org.example.gateway: DEBUG
+knife4j:
+  gateway:
+    enabled: true
+    strategy: manual
+    routes:
+      - name: user服务
+        service-name: user
+        url: /api/user/v3/api-docs
+        context-path: /api/user
+      - name: questions服务
+        service-name: questions
+        url: /api/questions/v3/api-docs
+        context-path: /api/questions
+      - name: questionBank服务
+        service-name: questionBank
+        url: /api/questionBank/v3/api-docs
+        context-path: /api/questionBank
+      - name: agent服务
+        service-name: agent
+        url: /api/agent/v3/api-docs
+        context-path: /api/agent
+      - name: 对象存储服务
+        service-name: file
+        url: /api/file/v3/api-docs
+        context-path: /api/file

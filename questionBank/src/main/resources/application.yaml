@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: questionBank
+  profiles:
+    active: local
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mianshi?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:}
+    password: ${MYSQL_PASSWORD:}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+server:
+  port: 8084
+# Knife4j 网关聚合模式
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+
+# SpringDoc 配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  packages-to-scan: org.example.questionbank.controller
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+# Sa-Token 配置
+sa-token:
+  # Token 名称（需与 user 服务保持一致）
+  token-name: satoken
+  # Token 有效期（1天，与 user 服务一致）
+  timeout: 86400
+  # 临时有效期（30分钟无操作后过期，-1 表示不限制）
+  active-timeout: 1800
+  # Token 风格
+  token-style: tik
+
+  # 是否从 Header 读取 Token
+  is-read-header: true
+  is-read-cookie: false
+  is-write-header: true
+  # 使用 Redis 存储（sa-token-dao-redis-jackson 使用 Jedis 直连）
+  storage-type: redis
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+
+dubbo:
+  application:
+    # 序列化安全检查: STRICT/WARN/DISABLE
+    serialize-check-status: WARN
+    # 自动信任项目中的序列化类
+    auto-trust-serialize-class: true
+  registry:
+    address: nacos://localhost:8848?username=${NACOS_USERNAME:nacos}&password=${NACOS_PASSWORD:}
+    register-mode: instance
+    group: dubbo
+  protocol:
+    name: dubbo
+    port: 50054
+    serialization: fastjson2
+  consumer:
+    timeout: 120000
+
